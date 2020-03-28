@@ -1,49 +1,67 @@
 <template>
   <div>
-    <slot v-if="loading" name="loading"/>
-    <div id="viewerContainer" ref="container">
-      <div id="viewer" class="pdfViewer"/>
-      <resizeSensor :initial="true" @resize="resizeScale"/>
+    <slot
+      v-if="loading"
+      name="loading"
+    />
+    <div
+      id="viewerContainer"
+      ref="container"
+    >
+      <div
+        id="viewer"
+        class="pdfViewer"
+      />
+      <resizeSensor
+        :initial="true"
+        @resize="resizeScale"
+      />
     </div>
   </div>
 </template>
 <script>
-  'use strict';
+  "use strict";
 
-  import 'pdfjs-dist/web/pdf_viewer.css';
-  import pdfjsLib from 'pdfjs-dist/webpack.js';
-  import { DefaultAnnotationLayerFactory, DefaultTextLayerFactory, PDFLinkService, PDFPageView } from 'pdfjs-dist/web/pdf_viewer.js';
-  import resizeSensor from 'vue-resize-sensor'
+  import "pdfjs-dist/web/pdf_viewer.css";
+  import pdfjsLib from "pdfjs-dist/webpack.js";
+  import {
+    DefaultAnnotationLayerFactory,
+    DefaultTextLayerFactory,
+    PDFLinkService,
+    PDFPageView
+  } from "pdfjs-dist/web/pdf_viewer.js";
+  import resizeSensor from "vue-resize-sensor";
 
   function isPDFDocumentLoadingTask(obj) {
-    return typeof (obj) === 'object' && obj !== null && obj.__PDFDocumentLoadingTask === true;
+    return (
+      typeof obj === "object" &&
+      obj !== null &&
+      obj.__PDFDocumentLoadingTask === true
+    );
   }
 
   function createLoadingTask(src, options) {
     var source;
-    if (typeof (src) === 'string')
-      source = {url: src};
-    else if (typeof (src) === 'object' && src !== null)
+    if (typeof src === "string") source = { url: src };
+    else if (typeof src === "object" && src !== null)
       source = Object.assign({}, src);
-    else
-      throw new TypeError('invalid src type');
+    else throw new TypeError("invalid src type");
 
     // see https://github.com/mozilla/pdf.js/blob/628e70fbb5dea3b9066aa5c34cca70aaafef8db2/src/display/dom_utils.js#L64
-    source.CMapReaderFactory = function () {
-
-      this.fetch = function (query) {
-
-        return import('raw-loader!pdfjs-dist/cmaps/' + query.name + '.bcmap' /* webpackChunkName: "noprefetch-[request]" */)
-          .then(function (bcmap) {
-
-            return {
-              cMapData: bcmap,
-              compressionType: pdfjsLib.CMapCompressionType.BINARY,
-            };
-          });
-      }
+    source.CMapReaderFactory = function() {
+      this.fetch = function(query) {
+        return import(
+          "raw-loader!pdfjs-dist/cmaps/" +
+            query.name +
+            ".bcmap" /* webpackChunkName: "noprefetch-[request]" */
+        ).then(function(bcmap) {
+          return {
+            cMapData: bcmap,
+            compressionType: pdfjsLib.CMapCompressionType.BINARY
+          };
+        });
+      };
     };
-
 
     var loadingTask = pdfjsLib.getDocument(source);
     loadingTask.__PDFDocumentLoadingTask = true; // since PDFDocumentLoadingTask is not public
@@ -65,68 +83,68 @@
     props: {
       src: {
         type: [String, Object],
-        default: '',
+        default: ""
       },
       page: {
         type: Number,
-        default: 1,
+        default: 1
       },
       rotate: {
         type: Number,
-        default: 0,
+        default: 0
       },
       scale: {
         type: [Number, String],
-        default: 1,
+        default: 1
       },
       resize: {
         type: Boolean,
-        default: false,
+        default: false
       },
       annotation: {
         type: Boolean,
-        default: false,
+        default: false
       },
       text: {
         type: Boolean,
-        default: true,
-      },
+        default: true
+      }
     },
-    data: function () {
+    data: function() {
       return {
         internalSrc: this.src,
         pdf: null,
         pdfViewer: null,
-        loading: true,
-      }
+        loading: true
+      };
     },
     watch: {
-      pdf: function (val) {
-        var pdfInfo = val.pdfInfo || val._pdfInfo
-        this.$emit('numpages', pdfInfo.numPages);
+      pdf: function(val) {
+        var pdfInfo = val.pdfInfo || val._pdfInfo;
+        this.$emit("numpages", pdfInfo.numPages);
       },
-      page: function (val) {
+      page: function(val) {
         var self = this;
-        this.pdf.getPage(val).then(function (pdfPage) {
+        this.pdf.getPage(val).then(function(pdfPage) {
           self.pdfViewer.setPdfPage(pdfPage);
           self.pdfViewer.draw();
         });
       },
-      scale: function (val) {
+      scale: function(val) {
         this.drawScaled(val);
       },
-      rotate: function (newRotate) {
+      rotate: function(newRotate) {
         if (this.pdfViewer) {
           this.pdfViewer.update(this.scale, newRotate);
           this.pdfViewer.draw();
         }
-      },
+      }
     },
-    mounted: function () {
+    mounted: function() {
       var self = this;
       if (!isPDFDocumentLoadingTask(self.internalSrc)) {
         self.internalSrc = createLoadingTask(self.internalSrc);
-        self.$emit('loading', true);
+        self.$emit("loading", true);
       }
 
       var container = this.$refs.container;
@@ -153,7 +171,8 @@
       //   }
       // });
       //
-      let annotationLayer = undefined, textLayer = undefined;
+      let annotationLayer = undefined,
+        textLayer = undefined;
       if (self.annotation) {
         annotationLayer = new DefaultAnnotationLayerFactory();
       }
@@ -162,36 +181,42 @@
       }
 
       self.internalSrc
-        .then(function (pdfDocument) {
+        .then(function(pdfDocument) {
           // Document loaded, retrieving the page.
           self.pdf = pdfDocument;
-          return pdfDocument.getPage(self.page)
-        }).then(function (pdfPage) {
-        // Creating the page view with default parameters.
-        self.pdfViewer = new PDFPageView({
-          container: container,
-          id: self.page,
-          scale: 1,
-          defaultViewport: pdfPage.getViewport({scale: 1}),
-          // We can enable text/annotations layers, if needed
-          textLayerFactory: textLayer,
-          annotationLayerFactory: annotationLayer,
-        });
-        // Associates the actual page with the view, and drawing it
-        self.pdfViewer.setPdfPage(pdfPage);
-        pdfLinkService.setViewer(self.pdfViewer);
-        self.drawScaled(self.scale);
-      }).catch(err => self.$emit('error', err))
+          return pdfDocument.getPage(self.page);
+        })
+        .then(function(pdfPage) {
+          // Creating the page view with default parameters.
+          self.pdfViewer = new PDFPageView({
+            container: container,
+            id: self.page,
+            scale: 1,
+            defaultViewport: pdfPage.getViewport({ scale: 1 }),
+            // We can enable text/annotations layers, if needed
+            textLayerFactory: textLayer,
+            annotationLayerFactory: annotationLayer
+          });
+          // Associates the actual page with the view, and drawing it
+          self.pdfViewer.setPdfPage(pdfPage);
+          pdfLinkService.setViewer(self.pdfViewer);
+          self.drawScaled(self.scale);
+        })
+        .catch(err => self.$emit("error", err));
     },
+    // beforeDestroy() {
+    //   var self = this;
+    //   if (self.pdfViewer) {
+    //     self.pdfViewer.destroy();
+    //     self.pdfViewer = null;
+    //   }
+    // },
     beforeDestroy() {
-      var self = this;
-      if (self.pdfViewer) {
-        self.pdfViewer.destroy();
-        self.pdfViewer = null;
-      }
+      this.pdfViewer.destroy();
+      this.pdfViewer = null;
     },
     methods: {
-      calculateScale: function (width = -1, height = -1) {
+      calculateScale: function(width = -1, height = -1) {
         this.pdfViewer.update(1, this.rotate); // Reset scaling to 1 so that "this.pdfViewer.viewport.width" gives proper width;
         if (width === -1 && height === -1) {
           width = this.$refs.container.offsetWidth;
@@ -199,23 +224,23 @@
 
         return width / this.pdfViewer.viewport.width;
       },
-      drawScaled: function (newScale) {
+      drawScaled: function(newScale) {
         if (this.pdfViewer) {
-          if (newScale === 'page-width') {
+          if (newScale === "page-width") {
             newScale = this.calculateScale();
             this.$emit("update:scale", newScale);
           }
           this.pdfViewer.update(newScale, this.rotate);
           this.pdfViewer.draw();
           this.loading = false;
-          this.$emit('loading', false);
+          this.$emit("loading", false);
         }
       },
-      resizeScale: function () {
+      resizeScale: function() {
         if (this.resize) {
-          this.drawScaled('page-width');
+          this.drawScaled("page-width");
         }
       }
     }
-  }
+  };
 </script>

@@ -1,5 +1,5 @@
 {
-  "name": "pdfvuer",
+  "name": "@sarawukl/pdfvuer",
   "description": "A PDF viewer for Vue using Mozilla's PDF.js",
   "version": "1.4.0",
   "author": "Gaurav Koley <arkokoley@live.in>",
@@ -10,7 +10,7 @@
     "url": "https://github.com/arkokoley/pdfvuer/issues",
     "email": "arkokoley@live.in"
   },
-  "repository": "github:arkokoley/pdfvuer",
+  "repository": "github:sarawukl/pdfvuer",
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
@@ -20,6 +20,7 @@
   "dependencies": {
     "core-js": "3",
     "pdfjs-dist": "^2.2.228",
+    "pdfvuer": "github:sarawukl/pdfvuer",
     "raw-loader": "^0.5.1",
     "vue-resize-sensor": "^2.0.0"
   },
@@ -29,20 +30,21 @@
     "not ie <= 8"
   ],
   "devDependencies": {
-    "@babel/preset-env": "^7.8.4",
     "@babel/core": "^7.8.4",
     "@babel/plugin-transform-runtime": "^7.8.3",
-    "babel-loader": "^7.1.2",
+    "@babel/preset-env": "^7.8.4",
     "babel-eslint": "^10.0.1",
+    "babel-loader": "^7.1.2",
+    "cross-env": "^5.0.5",
+    "css-loader": "^0.28.7",
     "eslint": "^6.8.0",
     "eslint-loader": "^2.1.2",
     "eslint-plugin-vue": "^6.1.2",
-    "cross-env": "^5.0.5",
-    "css-loader": "^0.28.7",
     "file-loader": "^1.1.4",
     "vue-loader": "^13.0.5",
     "vue-template-compiler": "^2.6.11",
     "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^2.9.1"
   }
 }
